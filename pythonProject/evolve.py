@@ -14,7 +14,8 @@ class EvolvePool:
 
         # remove from init
         self.compute_population_fitness(self.pop, self.target)
-        self.pop = self.natural_selection(self.pop)
+        fit_pop = self.natural_selection(self.pop)
+        self.breed_populations(self.pop, fit_pop)
 
 
     def get_pop(self):
@@ -22,18 +23,19 @@ class EvolvePool:
 
     # Initializes a base population with random genes
     # In current iteration, pop size has a fixed gene size
-    def initialize_random_population(self, pop_size, target_size, possible_genes):
+    @staticmethod
+    def initialize_random_population(pop_size, target_size, possible_genes):
         print("== Generating base population of "+ str(pop_size) +" members ==")
         population = list()
         # For each individual in pop_size
         for i in range(pop_size):
             # Create a genetic sequence
-            genes = []
+            genes = ""
             # For each symbol in the sequence
             for j in range(target_size):
                 # Insert a random gene at every position
                 gene = possible_genes[random.randrange(len(possible_genes))]
-                genes.append(gene)
+                genes += gene
             individual = [0, genes]
             population.append(individual)
         print("First Generation successfully generated")
@@ -49,6 +51,7 @@ class EvolvePool:
         return population
 
     def compute_individual_fitness(self, individual, target):
+        print("== Computing fitness ==")
         # Fitness starts at 0, if it increments it's bad
         fitness_score = 0
 
@@ -66,8 +69,52 @@ class EvolvePool:
         return fitness_score
 
     # Returns percentage % of the top of the individual candidates
-    def natural_selection(self, population, percentage=0.5):
+    @staticmethod
+    def natural_selection(population, percentage=0.5):
         population.sort()
         half = round(percentage * len(population))
 
         return population[0:half]
+
+    # Mixes the gene of pop_base with the genes that achieved a better fitness overall
+    @staticmethod
+    def breed_populations(pop_base, pop_selected, crossover_point=0.5, random_mix=False):
+        new_pop = list()
+        for i in range(len(pop_base)):
+            # Select next individual from base pop, and a random one from the evolved population
+            individual_base = pop_base[i]
+            random_selected = pop_selected[randrange(len(pop_selected))]
+
+            # Selects a point where the sequence is cut in 2
+            crossover_index = round(len(individual_base[1]) * crossover_point)
+            # Coin toss to select whether we start collecting genes from the base parent or the selected parent
+            base = bool(round(random.random()))
+
+            child_sequence = ""
+
+            # For each letter in the sequence
+            for j in range(len(individual_base[1])):
+                if random_mix:
+                    print("Not implemented yet")
+                else:
+                    # Append a letter from either the base parent or the selected parent
+                    if base:
+                        child_sequence += individual_base[1][j]
+                    else:
+                        child_sequence += random_selected[1][j]
+                # Once the crossover is reached, swap the source of the genes
+                if j == crossover_index:
+                    base = not base
+            # Append a child sequence to the new pop, set fitness to 0
+            new_pop.append([0, child_sequence])
+        return new_pop
+
+    def mutate_population(self, pop_base, genes, mut_rate=0.1):
+        # For every individual in current pop
+        for i in range(len(pop_base)):
+            # For every gene in current sequence
+            for j in range(len(pop_base[i][1])):
+                # Randomly mutate some genes
+                if random.random() < mut_rate:
+                    pop_base[i][1][j]  = genes[random.randrange(0, len(genes))]
+        return pop_base

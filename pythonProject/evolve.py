@@ -87,7 +87,9 @@ class EvolvePool:
             # Selects a point where the sequence is cut in 2
             crossover_index = round(len(individual_base[1]) * crossover_point)
             # Coin toss to select whether we start collecting genes from the base parent or the selected parent
-            base = bool(round(random.random()))
+            #base = bool(round(random.random()))
+
+            base = 1
 
             child_sequence = ""
 

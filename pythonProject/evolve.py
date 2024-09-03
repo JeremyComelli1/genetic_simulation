@@ -1,5 +1,6 @@
 import random
 import os
+from subprocess import call
 from random import randrange
 
 class EvolvePool:
@@ -67,8 +68,8 @@ class EvolvePool:
         if lowest_fitness < 1:
             return [0, population[0][1]]
         else:
-            self.print_progress(lowest_fitness)
-            print("Best guess: " + population[0][1])
+
+            print("Best guess: " + population[0][1] +" "+ " Fitness: " + str(lowest_fitness) + " " + self.get_progress(lowest_fitness))
 
         half = round(percentage * len(population))
 
@@ -79,31 +80,27 @@ class EvolvePool:
     def breed_populations(pop_base, pop_selected, crossover_point=0.5, random_mix=False):
         new_pop = list()
         for i in range(len(pop_base)):
-            # Select next individual from base pop, and a random one from the evolved population
-            individual_base = pop_base[i]
+            # Select a random individual from base pop, and a random individual from the population with best fitness
+            random_base = pop_base[random.randrange(len(pop_base))]
             random_selected = pop_selected[randrange(len(pop_selected))]
 
             # Selects a point where the sequence is cut in 2
-            crossover_index = round(len(individual_base[1]) * crossover_point)
-            # Coin toss to select whether we start collecting genes from the base parent or the selected parent
-            #base = bool(round(random.random()))
-
-            base = 1
-
+            crossover_index = random.randrange(len(random_base[1]) - 1)
             child_sequence = ""
+            crossover_reached = False
 
             # For each letter in the sequence
-            for j in range(len(individual_base[1])):
+            for j in range(len(random_base[1])):
                 # Once the crossover is reached, swap the source of the genes
                 if j == crossover_index:
-                    base = not base
-
+                    crossover_reached = True
                 if random_mix:
                     print("Not implemented yet")
+                    exit(1)
                 else:
                     # Append a letter from either the base parent or the selected parent
-                    if base:
-                        child_sequence += individual_base[1][j]
+                    if not crossover_reached:
+                        child_sequence += random_base[1][j]
                     else:
                         child_sequence += random_selected[1][j]
 
@@ -131,28 +128,27 @@ class EvolvePool:
         generations = 0
         result = ''
         population_current_iteration = self.pop
-        os.system('clear')
         print("Current generation: " + str(generations))
         while True:
             generations += 1
             # Pipeline: Calculate fitness -> kill off higher fitness individuals
-            population_current_iteration = self.natural_selection(self.compute_population_fitness(population_current_iteration, self.target))
+            selected_population_current_iteration = self.natural_selection(self.compute_population_fitness(population_current_iteration, self.target))
             # If a single result is returned, we hit fitness = 0
-            if len(population_current_iteration) < 3:
+            if len(selected_population_current_iteration) < 3:
                 # Lowest fitness has been reached, output best candidate
-                result = population_current_iteration
+                result = selected_population_current_iteration
                 break
             else:
                 # If solution is not reached, Pipeline continues: Breed population -> introduce random mutations, then go back to start
-                population_current_iteration = self.mutate_population(self.breed_populations(self.pop, population_current_iteration), self.genes)
+                population_current_iteration = self.mutate_population(self.breed_populations(population_current_iteration, selected_population_current_iteration), self.genes)
 
         print("Result found in "+ str(generations) +" generations.")
         print("Result is "+ str(result))
         return result, generations
 
     @staticmethod
-    def print_progress(fitness):
+    def get_progress(fitness):
         progress_bar = ""
         for i in (range(fitness)):
             progress_bar+="o"
-        print(progress_bar)
+        return progress_bar

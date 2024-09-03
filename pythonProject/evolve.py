@@ -10,14 +10,6 @@ class EvolvePool:
         self.advanced = advanced_fitness
         self.pop = self.initialize_random_population(self.pop_size, len(self.target), self.genes)
 
-
-
-        # remove from init
-        self.compute_population_fitness(self.pop, self.target)
-        fit_pop = self.natural_selection(self.pop)
-        self.breed_populations(self.pop, fit_pop)
-
-
     def get_pop(self):
         return self.pop
 
@@ -43,15 +35,14 @@ class EvolvePool:
 
     # Gives a fitness score to each individual from a given population
     def compute_population_fitness(self, population, target):
-        print("Computing fitness...")
+        print("Computing fitness")
         # Set fitness score for each individual
         for i in range(len(population)):
             population[i][0] = self.compute_individual_fitness(population[i], target)
-        # Sort by smallest fitness
         return population
 
     def compute_individual_fitness(self, individual, target):
-        print("== Computing fitness ==")
+
         # Fitness starts at 0, if it increments it's bad
         fitness_score = 0
 
@@ -69,9 +60,16 @@ class EvolvePool:
         return fitness_score
 
     # Returns percentage % of the top of the individual candidates
-    @staticmethod
-    def natural_selection(population, percentage=0.5):
+    def natural_selection(self, population, percentage=0.5):
         population.sort()
+        lowest_fitness = population[0][0]
+        # If fitness hits 0, we found the best possible sequence, so that's what we return
+        # TODO: needs improvement, as a perfect solution typically doesn't exist for most problems
+        if lowest_fitness < 1:
+            return [0, population[0][1]]
+        else:
+            self.print_progress(lowest_fitness)
+
         half = round(percentage * len(population))
 
         return population[0:half]
@@ -79,6 +77,7 @@ class EvolvePool:
     # Mixes the gene of pop_base with the genes that achieved a better fitness overall
     @staticmethod
     def breed_populations(pop_base, pop_selected, crossover_point=0.5, random_mix=False):
+        print("Starting gene swapping")
         new_pop = list()
         for i in range(len(pop_base)):
             # Select next individual from base pop, and a random one from the evolved population
@@ -94,6 +93,10 @@ class EvolvePool:
 
             # For each letter in the sequence
             for j in range(len(individual_base[1])):
+                # Once the crossover is reached, swap the source of the genes
+                if j == crossover_index:
+                    base = not base
+
                 if random_mix:
                     print("Not implemented yet")
                 else:
@@ -102,19 +105,52 @@ class EvolvePool:
                         child_sequence += individual_base[1][j]
                     else:
                         child_sequence += random_selected[1][j]
-                # Once the crossover is reached, swap the source of the genes
-                if j == crossover_index:
-                    base = not base
+
             # Append a child sequence to the new pop, set fitness to 0
             new_pop.append([0, child_sequence])
+        print("Genes successfully swapped")
         return new_pop
 
-    def mutate_population(self, pop_base, genes, mut_rate=0.1):
+    @staticmethod
+    def mutate_population(pop_base, genes, mut_rate=0.1):
+        mutations_count = 0
         # For every individual in current pop
         for i in range(len(pop_base)):
             # For every gene in current sequence
             for j in range(len(pop_base[i][1])):
                 # Randomly mutate some genes
                 if random.random() < mut_rate:
-                    pop_base[i][1][j]  = genes[random.randrange(0, len(genes))]
+                    mutations_count += 1
+                    extracted_gene = list(pop_base[i][1])
+                    extracted_gene[j]  = genes[random.randrange(0, len(genes))]
+                    pop_base[i][1] = ''.join(extracted_gene)
+        print("Introduced "+str(mutations_count)+" mutations")
         return pop_base
+
+    def evolve_pool(self):
+        fitness = -1
+        generations = 0
+        result = ''
+        population_current_iteration = self.pop
+        while True:
+            generations += 1
+            # Pipeline: Calculate fitness -> kill off higher fitness individuals
+            population_current_iteration = self.natural_selection(self.compute_population_fitness(population_current_iteration, self.target))
+            # If a single result is returned, we hit fitness = 0
+            if len(population_current_iteration) < 3:
+                # Lowest fitness has been reached, output best candidate
+                result = population_current_iteration
+                break
+            else:
+                # If solution is not reached, Pipeline continues: Breed population -> introduce random mutations, then go back to start
+                population_current_iteration = self.mutate_population(self.breed_populations(self.pop, population_current_iteration), self.genes)
+
+        print("Result found in "+ str(generations) +" generations.")
+        print("Result is "+ str(result))
+
+    @staticmethod
+    def print_progress(fitness):
+        progress_bar = ""
+        for i in (range(fitness)):
+            progress_bar+="o"
+        print(progress_bar)

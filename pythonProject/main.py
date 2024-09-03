@@ -20,5 +20,5 @@ output.write("ended: "+ str(end)+"\n")
 
 computation_time = end - start
 
-output.write("computation time: "+ str(computation_time) +", "+ str(generations))
-output.write("=====================================================================\n")
+output.write("computation time: "+ str(computation_time) +", "+ str(generations) +" generations")
+output.write("\n\n=====================================================================\n")

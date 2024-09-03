@@ -1,4 +1,5 @@
 import random
+import os
 from random import randrange
 
 class EvolvePool:
@@ -30,12 +31,10 @@ class EvolvePool:
                 genes += gene
             individual = [0, genes]
             population.append(individual)
-        print("First Generation successfully generated")
         return population
 
     # Gives a fitness score to each individual from a given population
     def compute_population_fitness(self, population, target):
-        print("Computing fitness")
         # Set fitness score for each individual
         for i in range(len(population)):
             population[i][0] = self.compute_individual_fitness(population[i], target)
@@ -69,6 +68,7 @@ class EvolvePool:
             return [0, population[0][1]]
         else:
             self.print_progress(lowest_fitness)
+            print("Best guess: " + population[0][1])
 
         half = round(percentage * len(population))
 
@@ -77,7 +77,6 @@ class EvolvePool:
     # Mixes the gene of pop_base with the genes that achieved a better fitness overall
     @staticmethod
     def breed_populations(pop_base, pop_selected, crossover_point=0.5, random_mix=False):
-        print("Starting gene swapping")
         new_pop = list()
         for i in range(len(pop_base)):
             # Select next individual from base pop, and a random one from the evolved population
@@ -110,7 +109,6 @@ class EvolvePool:
 
             # Append a child sequence to the new pop, set fitness to 0
             new_pop.append([0, child_sequence])
-        print("Genes successfully swapped")
         return new_pop
 
     @staticmethod
@@ -126,7 +124,6 @@ class EvolvePool:
                     extracted_gene = list(pop_base[i][1])
                     extracted_gene[j]  = genes[random.randrange(0, len(genes))]
                     pop_base[i][1] = ''.join(extracted_gene)
-        print("Introduced "+str(mutations_count)+" mutations")
         return pop_base
 
     def evolve_pool(self):
@@ -134,6 +131,8 @@ class EvolvePool:
         generations = 0
         result = ''
         population_current_iteration = self.pop
+        os.system('clear')
+        print("Current generation: " + str(generations))
         while True:
             generations += 1
             # Pipeline: Calculate fitness -> kill off higher fitness individuals

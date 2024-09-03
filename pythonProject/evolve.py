@@ -147,6 +147,7 @@ class EvolvePool:
 
         print("Result found in "+ str(generations) +" generations.")
         print("Result is "+ str(result))
+        return result, generations
 
     @staticmethod
     def print_progress(fitness):
